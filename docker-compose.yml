@@ -13,6 +13,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deno_user -d deno_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
@@ -27,8 +32,14 @@ services:
       - "9200:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - app-network
+
 
   deno:
     build:
@@ -37,12 +48,11 @@ services:
     container_name: deno_api
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=postgres://deno_user:deno_pass@db:5432/deno_db
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
     depends_on:
-      - postgres
-      - elasticsearch
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     networks:
       - app-network
 

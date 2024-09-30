@@ -6,7 +6,6 @@ import { delay } from "https://deno.land/std@0.203.0/async/mod.ts";
 // Configuration Constants
 const API_URL = Deno.env.get("API_URL") || "http://localhost:8000/articles"; // API endpoint
 const TOTAL_ARTICLES = 10000; // Total number of articles to seed
-const CONCURRENT_REQUESTS = 100; // Number of concurrent POST requests
 
 // Utility Functions
 
@@ -73,34 +72,12 @@ async function createArticle(index: number): Promise<void> {
  */
 async function seedArticles() {
   console.log(`🚀 Starting to seed ${TOTAL_ARTICLES} articles...`);
-
-  let currentIndex = 1;
   let completed = 0;
 
-  // Function to process a single batch
-  const processBatch = async () => {
-    while (currentIndex <= TOTAL_ARTICLES) {
-      const index = currentIndex++;
-      createArticle(index).then(() => {
-        completed++;
-        if (completed % 1000 === 0) {
-          console.log(`🟢 ${completed} articles created so far...`);
-        }
-      });
-    }
-  };
-
-  // Start concurrent workers
-  const workers = [];
-  for (let i = 0; i < CONCURRENT_REQUESTS; i++) {
-    workers.push(processBatch());
+  for (let i = 0; i < TOTAL_ARTICLES; i++) {
+    await createArticle(i);
+    completed++;
   }
-
-  // Wait for all workers to finish
-  await Promise.all(workers);
-
-  // Wait a bit to ensure all logs are printed
-  await delay(5000);
 
   console.log(`🎉 Seeding completed. Total articles created: ${completed}`);
 }

@@ -32,6 +32,8 @@ async function initializeEsIndex() {
   }
 }
 
+await initializeEsIndex();
+
 router.post("/init", async (ctx: Context) => {
   await initializeEsIndex();
 
